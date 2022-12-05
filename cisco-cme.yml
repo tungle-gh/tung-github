@@ -1,0 +1,97 @@
+—
+
+– name: Manage Cisco Router CME devices
+
+  hosts: r1
+
+  gather_facts: false
+
+  connection: local
+
+  vars:
+
+    cli:
+
+      username: admin
+
+      password: cisco
+
+  tasks:
+
+    – name: Configure Ephone-dn on R2
+
+      ios_config:
+
+        provider: “{{ cli }}”
+
+        authorize: yes
+
+        parents: ephone-dn  1
+
+        lines:
+
+          – number 1111
+
+          – name tungle1-1111
+
+          – hold-alert 30 originator
+
+    – name: Configure Ephone-dn on R2
+
+      ios_config:
+
+        provider: “{{ cli }}”
+
+        authorize: yes
+
+        parents: ephone-dn  2
+
+        lines:
+
+          – number 1112
+
+          – name tungle1-1112
+
+          – hold-alert 30 originator
+
+    – name: Configure Ephone number on R2
+
+      ios_config:
+
+        provider: “{{ cli }}”
+
+        authorize: yes
+
+        parents: ephone  1
+
+        lines:
+
+          – mac-address 0800.AAAA.28C0
+
+          – username “tungle1-1111” password Pa$$w0rd
+
+          – type CIPC
+
+          – button  1:1
+
+    – name: Configure Ephone number on R2
+
+      ios_config:
+
+        provider: “{{ cli }}”
+
+        authorize: yes
+
+        parents: ephone  2
+
+        lines:
+
+          – mac-address 0800.BBBB.1234
+
+          – username “tungle1-1112” password Pa$$w0rd
+
+          – type CIPC
+
+          – button  1:2
+
+      register: print_output –  debug: var=print_output
