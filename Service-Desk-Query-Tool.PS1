@@ -267,24 +267,39 @@ function execute-query {
                 if ($OSBuildCheck.checked) {
                     # Query Windows OS build by getting its information on Registry
                     $CurrentBuild_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion') }
-                    $myobject.add('Windows OS Build', $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
-                } 
-
-                if ($SymantecCheck.checked) {
-                    # Query Symantec antivirus update definition by getting its information on Registry
-                    $Symantec_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Symantec\Symantec Endpoint Protection\CurrentVersion\Public-Opstate') } -ErrorAction SilentlyContinue
-                    $myobject.add('Symantec_Definition', $Symantec_Code.LatestVirusDefsDate)
+                    Try {
+                        
+                        $DisplayVersion = $CurrentBuild_Code.DisplayVersion
+                    }
+                    Catch {
+                        $DisplayVersion = $null
+                    }
+                    if ($null -ne $DisplayVersion) {
+                        # Windows 10/11
+                        $myobject.add('Windows OS Build', $DisplayVersion + "." + $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR
+                    }
+                    else {
+                        # Widows server 2016 does not have "Displayversion" information 
+                        $myobject.add('Windows OS Build', $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
+                    }
                 }
+            } 
 
-                if ($LastRebootCheck.checked) {
-                    # Query Last Reboot information via Event Viewer with Event ID is 1074, then output Username, TimeCreated and Category of its value
-                    $LastReboot_code = Invoke-Command -Session $WinRM_session -ScriptBlock { Get-WinEvent -filterhash @{Logname = 'system'; ID = 1074 } -MaxEvents 1 | Select-Object `
-                        @{Name = "Computername"; Expression = { $_.properties[1].value } }, `
-                        @{Name = "UserName"; Expression = { ($_.properties[-1]).value } }, @{ expression = { $_.TimeCreated }; label = 'Last Reboot' }, ` 
-                        @{Name = "Category"; Expression = { $_.properties[4].value } } } 
-                    $myobject.add('LastReboot', $LastReboot_code.'Last Reboot')
-                    $myobject.add('UserName', $LastReboot_code.'Username')
-                    $myobject.add('Category', $LastReboot_code.'Category')
+            if ($SymantecCheck.checked) {
+                # Query Symantec antivirus update definition by getting its information on Registry
+                $Symantec_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Symantec\Symantec Endpoint Protection\CurrentVersion\Public-Opstate') } -ErrorAction SilentlyContinue
+                $myobject.add('Symantec_Definition', $Symantec_Code.LatestVirusDefsDate)
+            }
+
+            if ($LastRebootCheck.checked) {
+                # Query Last Reboot information via Event Viewer with Event ID is 1074, then output Username, TimeCreated and Category of its value
+                $LastReboot_code = Invoke-Command -Session $WinRM_session -ScriptBlock { Get-WinEvent -filterhash @{Logname = 'system'; ID = 1074 } -MaxEvents 1 | Select-Object `
+                    @{Name = "Computername"; Expression = { $_.properties[1].value } }, `
+                    @{Name = "UserName"; Expression = { ($_.properties[-1]).value } }, @{ expression = { $_.TimeCreated }; label = 'Last Reboot' }, ` 
+                    @{Name = "Category"; Expression = { $_.properties[4].value } } } 
+                $myobject.add('LastReboot', $LastReboot_code.'Last Reboot')
+                $myobject.add('UserName', $LastReboot_code.'Username')
+                $myobject.add('Category', $LastReboot_code.'Category')
                 }
             }
             
