@@ -13,7 +13,7 @@
     Output the checking result of the computer
 .NOTES
     Author:  Tung
-    Date: 2022-11-27
+    Date: 2022-11-28
 #>
 
 # Creating Windows Forms .NET for PowerShell GUI 
