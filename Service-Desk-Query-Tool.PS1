@@ -276,7 +276,7 @@ function execute-query {
                     }
                     if ($null -ne $DisplayVersion) {
                         # Windows 10/11
-                        $myobject.add('Windows OS Build', $DisplayVersion + "." + $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR
+                        $myobject.add('Windows OS Build', $DisplayVersion + "." + $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
                     }
                     else {
                         # Widows server 2016 does not have "Displayversion" information 
