@@ -18,38 +18,42 @@ function Get-IPaddress {
     #>
     [CmdletBinding()]
     Param (
-            [Parameter(
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true,
-                Position=0)]
+        [Parameter(
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true,
+            Position = 0)]
      
-            [string[]]
-                $IPaddress = ""
-        )
+        [string[]]
+        $IPaddress = ""
+    )
     BEGIN {}
     PROCESS {
-    try {
-        if ($IPaddress -eq "" ) {
-            $IPaddress = read-host "Enter IP address to check Geo-IP information"
-        }
-        $result = Invoke-RestMethod -Method Get -Uri http://ip-api.com/json/$IPaddress
-        # Create a PSCustomObject to contain Geo-IP information
-        $myObject = [PSCustomObject]@{
-            IP = $result.query
-            City = $result.City
-            Country = $result.Country
-            Region = $result.Region
-            ISP = $result.isp
+        try {
+            if ($IPaddress -eq "" ) {
+                $IPaddress = read-host "Enter IP address to check Geo-IP information"
             }
-    }
-    catch
-    {
-        #"Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
-        $_
-    }
-    finally {
-        $myObject | format-list
-        #$myObject | ConvertTo-Json
-    }   
+            $API = @{
+                Uri    = "http://ip-api.com/json/$IPaddress"
+                Method = "Get"
+            }
+            $result = Invoke-RestMethod @API
+            #$result = Invoke-RestMethod -Method Get -Uri http://ip-api.com/json/$IPaddress
+            # Create a PSCustomObject to contain Geo-IP information
+            $myObject = [PSCustomObject]@{
+                IP      = $result.query
+                City    = $result.City
+                Country = $result.Country
+                Region  = $result.Region
+                ISP     = $result.isp
+            }
+        }
+        catch {
+            #"Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+            $_
+        }
+        finally {
+            $myObject | format-list
+            #$myObject | ConvertTo-Json
+        }   
     }
 }
