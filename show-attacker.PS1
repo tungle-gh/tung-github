@@ -5,7 +5,12 @@ $output = $inputpath | Select-String -Pattern $regex -AllMatches | Select-String
 | Group-Object |  Select-Object Name, Count | Where-Object {$_.Count -gt 20}
 ForEach($line in $output){
         $IP = $line.Name
-        $result = Invoke-RestMethod -Method Get -Uri http://ip-api.com/json/$IP
+	$API = @{
+                Uri    = "http://ip-api.com/json/$IP"
+                Method = "Get"
+            }
+        $result = Invoke-RestMethod @API
+        #$result = Invoke-RestMethod -Method Get -Uri http://ip-api.com/json/$IP
         # Sleep a second 
         Start-Sleep 1
     	#Write-Output $_count
