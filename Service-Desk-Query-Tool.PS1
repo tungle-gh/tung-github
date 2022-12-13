@@ -200,113 +200,117 @@ $Query.Text = "IT Sevice Desk Query Tool"
 # Writing a function to query the remote machine information
 function execute-query {
     $computer = $inputbox.text
-    # use Ping to detect the machine is UP or DOWN
-    $ping_result = Test-Connection -ComputerName $computer -Count 1 -Quiet
-    if ($ping_result) {
-        # 
-        if ($CMIRadio.Checked) {
-            # Using CIM via WS-Man protocol
-            $option = New-CimSessionOption -Protocol wsman 
-            $session = New-CimSession -ComputerName $computer -SessionOption $option
-            # create a hash table
-            $myobject = [ordered]@{Computername = $computer }
-            if ($Comcomputerheck.checked) {
-                $os = Get-CimInstance -ClassName win32_operatingsystem -CimSession $session
-                $IPaddress = (Get-CimInstance -CimSession $Session -ClassName Win32_NetworkAdapterConfiguration -Filter "IPEnabled = 'True'").IPAddress[0]
-                $myobject.add('OsVersion', $os.version)
-                #$myobject.add('Build', $os.buildnumber)
-                $myobject.add('OS Installed Date', $os.InstallDate)
-                $myobject.add('IP address', $IPaddress)
-                $myobject.add('OS', $os.caption)
-            }
-            if ($CPUcheck.checked) {
-                $cs = Get-CimInstance -ClassName win32_computersystem -CimSession $session
-                # Querying CPU information
-
-                $CPU_var = (Get-Counter '\Processor(_Total)\% Processor Time' -computer $computer).CounterSamples.CookedValue
-                $CPU_utilization = [Math]::Round($CPU_var) 
-                $myobject.add('Logical Processors', $cs.numberoflogicalprocessors)
-                $myobject.add('Processors', $cs.numberofprocessors)
-                $myobject.add('CPU Utilization', [string]($CPU_utilization) + '%')
-
-                # Querying RAM Usage information
-                $ComputerMemory = Get-CimInstance -ClassName win32_operatingsystem -CimSession $session
-                $Memory = ((($ComputerMemory.TotalVisibleMemorySize - $ComputerMemory.FreePhysicalMemory) * 100) / $ComputerMemory.TotalVisibleMemorySize)
-                $RoundMemory = [math]::Round($Memory, 2)
-                $myobject.add('Memory Usage', [string]([Math]::Round($RoundMemory)) + '%')
-            }
-            if ($diskcheck.checked) {
-                # Geting physical hard drives C: and D: which are not CDROM drive
-                $disk = Get-CimInstance -ClassName win32_logicaldisk -Filter "DriveType=3" -CimSession $session | Select-Object -Property DeviceID, FreeSpace, Size 
-                # Query C: drive
-                if ($disk.deviceID -eq "C:") {
-                    #$myobject.add('C: Drive', $disk.DeviceID[0])
-                    $myobject.add('C: Free', [string]([Math]::Round($disk.Freespace[0] / 1GB)) + 'GB')
-                    $myobject.add('C: Size', [string]([Math]::Round($disk.size[0] / 1GB)) + 'GB')
-                    $myobject.add('C: % Free', [string]([Math]::Round($disk.Freespace[0] / $disk.size[0], 2) * 100) + '%')
+    # Check if the $computer is NOT NULL
+    if (-not ([string]::IsNullOrEmpty($computer))){
+        # use Ping to detect the machine is UP or DOWN
+        $ping_result = Test-Connection -ComputerName $computer -Count 1 -Quiet
+        if ($ping_result) {
+            # 
+            if ($CMIRadio.Checked) {
+                # Using CIM via WS-Man protocol
+                $option = New-CimSessionOption -Protocol wsman 
+                $session = New-CimSession -ComputerName $computer -SessionOption $option
+                # create a hash table
+                $myobject = [ordered]@{Computername = $computer }
+                if ($Comcomputerheck.checked) {
+                    $os = Get-CimInstance -ClassName win32_operatingsystem -CimSession $session
+                    $IPaddress = (Get-CimInstance -CimSession $Session -ClassName Win32_NetworkAdapterConfiguration -Filter "IPEnabled = 'True'").IPAddress[0]
+                    $myobject.add('OsVersion', $os.version)
+                    #$myobject.add('Build', $os.buildnumber)
+                    $myobject.add('OS Installed Date', $os.InstallDate)
+                    $myobject.add('IP address', $IPaddress)
+                    $myobject.add('OS', $os.caption)
                 }
-                # Query D: drive
-                if ($disk.deviceID -eq "D:") {
-                    #$myobject.add('D: Drive', $disk.DeviceID[0])
-                    $myobject.add('D: Free', [string]([Math]::Round($disk.Freespace[1] / 1GB)) + 'GB')
-                    $myobject.add('D: Size', [string]([Math]::Round($disk.size[1] / 1GB)) + 'GB')
-                    $myobject.add('D: % Free', [string]([Math]::Round($disk.Freespace[1] / $disk.size[1], 2) * 100) + '%')
+                if ($CPUcheck.checked) {
+                    $cs = Get-CimInstance -ClassName win32_computersystem -CimSession $session
+                    # Querying CPU information
+
+                    $CPU_var = (Get-Counter '\Processor(_Total)\% Processor Time' -computer $computer).CounterSamples.CookedValue
+                    $CPU_utilization = [Math]::Round($CPU_var) 
+                    $myobject.add('Logical Processors', $cs.numberoflogicalprocessors)
+                    $myobject.add('Processors', $cs.numberofprocessors)
+                    $myobject.add('CPU Utilization', [string]($CPU_utilization) + '%')
+
+                    # Querying RAM Usage information
+                    $ComputerMemory = Get-CimInstance -ClassName win32_operatingsystem -CimSession $session
+                    $Memory = ((($ComputerMemory.TotalVisibleMemorySize - $ComputerMemory.FreePhysicalMemory) * 100) / $ComputerMemory.TotalVisibleMemorySize)
+                    $RoundMemory = [math]::Round($Memory, 2)
+                    $myobject.add('Memory Usage', [string]([Math]::Round($RoundMemory)) + '%')
                 }
-            }
-            
-            $session | Remove-CimSession
-            $obj = New-Object -TypeName psobject -Property $myobject
-            $outputbox.text = ($obj | format-list | out-string).TrimStart()
-        }
-        if ($WinRMRadio.Checked) {
-            # create a hash table  
-            $myobject = [ordered]@{Computername = $computer }
-            # Using WinRM to query remote machine information
-            $WinRM_session = New-PSSession -ComputerName $computer
-            if ($WinRM_session) {
-                if ($OSBuildCheck.checked) {
-                    # Query Windows OS build by getting its information on Registry
-                    $CurrentBuild_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion') }
-                    Try {
-                        
-                        $DisplayVersion = $CurrentBuild_Code.DisplayVersion
+                if ($diskcheck.checked) {
+                    # Geting physical hard drives C: and D: which are not CDROM drive
+                    $disk = Get-CimInstance -ClassName win32_logicaldisk -Filter "DriveType=3" -CimSession $session | Select-Object -Property DeviceID, FreeSpace, Size 
+                    # Query C: drive
+                    if ($disk.deviceID -eq "C:") {
+                        #$myobject.add('C: Drive', $disk.DeviceID[0])
+                        $myobject.add('C: Free', [string]([Math]::Round($disk.Freespace[0] / 1GB)) + 'GB')
+                        $myobject.add('C: Size', [string]([Math]::Round($disk.size[0] / 1GB)) + 'GB')
+                        $myobject.add('C: % Free', [string]([Math]::Round($disk.Freespace[0] / $disk.size[0], 2) * 100) + '%')
                     }
-                    Catch {
-                        $DisplayVersion = $null
-                    }
-                    if ($null -ne $DisplayVersion) {
-                        # Windows 10/11
-                        $myobject.add('Windows OS Build', $DisplayVersion + "." + $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
-                    }
-                    else {
-                        # Widows server 2016 does not have "Displayversion" information 
-                        $myobject.add('Windows OS Build', $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
+                    # Query D: drive
+                    if ($disk.deviceID -eq "D:") {
+                        #$myobject.add('D: Drive', $disk.DeviceID[0])
+                        $myobject.add('D: Free', [string]([Math]::Round($disk.Freespace[1] / 1GB)) + 'GB')
+                        $myobject.add('D: Size', [string]([Math]::Round($disk.size[1] / 1GB)) + 'GB')
+                        $myobject.add('D: % Free', [string]([Math]::Round($disk.Freespace[1] / $disk.size[1], 2) * 100) + '%')
                     }
                 }
-            } 
 
-            if ($SymantecCheck.checked) {
-                # Query Symantec antivirus update definition by getting its information on Registry
-                $Symantec_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Symantec\Symantec Endpoint Protection\CurrentVersion\Public-Opstate') } -ErrorAction SilentlyContinue
-                $myobject.add('Symantec_Definition', $Symantec_Code.LatestVirusDefsDate)
+                $session | Remove-CimSession
+                $obj = New-Object -TypeName psobject -Property $myobject
+                $outputbox.text = ($obj | format-list | out-string).TrimStart()
             }
+            if ($WinRMRadio.Checked) {
+                # create a hash table  
+                $myobject = [ordered]@{Computername = $computer }
+                # Using WinRM to query remote machine information
+                $WinRM_session = New-PSSession -ComputerName $computer
+                if ($WinRM_session) {
+                    if ($OSBuildCheck.checked) {
+                        # Query Windows OS build by getting its information on Registry
+                        $CurrentBuild_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion') }
+                        Try {
 
-            if ($LastRebootCheck.checked) {
-                # Query Last Reboot information via Event Viewer with Event ID is 1074, then output Username, TimeCreated and Category of its value
-                $LastReboot_code = Invoke-Command -Session $WinRM_session -ScriptBlock { Get-WinEvent -filterhash @{Logname = 'system'; ID = 1074 } -MaxEvents 1 | Select-Object `
-                    @{Name = "Computername"; Expression = { $_.properties[1].value } }, `
-                    @{Name = "UserName"; Expression = { ($_.properties[-1]).value } }, @{ expression = { $_.TimeCreated }; label = 'Last Reboot' }, ` 
-                    @{Name = "Category"; Expression = { $_.properties[4].value } } } 
-                $myobject.add('LastReboot', $LastReboot_code.'Last Reboot')
-                $myobject.add('UserName', $LastReboot_code.'Username')
-                $myobject.add('Category', $LastReboot_code.'Category')
+                            $DisplayVersion = $CurrentBuild_Code.DisplayVersion
+                        }
+                        Catch {
+                            $DisplayVersion = $null
+                        }
+                        if ($null -ne $DisplayVersion) {
+                            # Windows 10/11
+                            $myobject.add('Windows OS Build', $DisplayVersion + "." + $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
+                        }
+                        else {
+                            # Widows server 2016 does not have "Displayversion" information 
+                            $myobject.add('Windows OS Build', $CurrentBuild_Code.CurrentBuild + "." + $CurrentBuild_Code.UBR)
+                        }
+                    }
+                } 
+
+                if ($SymantecCheck.checked) {
+                    # Query Symantec antivirus update definition by getting its information on Registry
+                    $Symantec_Code = Invoke-Command -Session $WinRM_session -ScriptBlock { (Get-ItemProperty -PATH 'HKLM:\SOFTWARE\Symantec\Symantec Endpoint Protection\CurrentVersion\Public-Opstate') } -ErrorAction SilentlyContinue
+                    $Symantec_Update = [string]($Symantec_Code.LatestVirusDefsDate) + " " + "r" + [string]($Symantec_Code.LatestVirusDefsRevision)
+                    $myobject.add('Symantec_DefsDate', $Symantec_Update)
                 }
+
+                if ($LastRebootCheck.checked) {
+                    # Query Last Reboot information via Event Viewer with Event ID is 1074, then output Username, TimeCreated and Category of its value
+                    $LastReboot_code = Invoke-Command -Session $WinRM_session -ScriptBlock { Get-WinEvent -filterhash @{Logname = 'system'; ID = 1074 } -MaxEvents 1 | Select-Object `
+                        @{Name = "Computername"; Expression = { $_.properties[1].value } }, `
+                        @{Name = "UserName"; Expression = { ($_.properties[-1]).value } }, @{ expression = { $_.TimeCreated }; label = 'Last Reboot' }, ` 
+                        @{Name = "Category"; Expression = { $_.properties[4].value } } } 
+                    $myobject.add('LastReboot', $LastReboot_code.'Last Reboot')
+                    $myobject.add('UserName', $LastReboot_code.'Username')
+                    $myobject.add('Category', $LastReboot_code.'Category')
+                    }
+                }
+
+                $WinRM_session | Remove-PSSession
+                $winrm_obj = New-Object -TypeName psobject -Property $myobject
+                $outputbox.text = ($winrm_obj | format-list | out-string).TrimStart()
+                #$WinRM_session | Remove-PSSession
             }
-            
-            $WinRM_session | Remove-PSSession
-            $winrm_obj = New-Object -TypeName psobject -Property $myobject
-            $outputbox.text = ($winrm_obj | format-list | out-string).TrimStart()
-            #$WinRM_session | Remove-PSSession
         }
     }
 }
