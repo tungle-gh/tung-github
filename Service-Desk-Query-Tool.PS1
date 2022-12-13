@@ -200,7 +200,7 @@ $Query.Text = "IT Sevice Desk Query Tool"
 # Writing a function to query the remote machine information
 function execute-query {
     $computer = $inputbox.text
-    # Check if the $computer is NOT NULL
+    # Check if the $computer is NOT NULL 
     if (-not ([string]::IsNullOrEmpty($computer))){
         # use Ping to detect the machine is UP or DOWN
         $ping_result = Test-Connection -ComputerName $computer -Count 1 -Quiet
