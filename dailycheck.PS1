@@ -59,7 +59,7 @@ foreach ($computer in $computers) {
         # Creating a PSCustomObject
         $winrm_obj = New-Object -TypeName psobject -Property $myobject
         # outputing to csv file
-        $winrm_obj | export-csv -NoTypeInformation -append "C:\Sahred\PS Scripts\$filename.csv"
+        $winrm_obj | export-csv -NoTypeInformation -append "C:\Shared\PSLogs\$filename.csv"
         #$outputbox.text = ($winrm_obj | format-list | out-string).TrimStart()
     }
 }
