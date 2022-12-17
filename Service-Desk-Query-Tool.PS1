@@ -313,7 +313,6 @@ function execute-query {
             }
         }
     }
-}
 
 $Executebutton.add_click({ execute-query })
 [void]$query.ShowDialog()
