@@ -5,7 +5,7 @@ Get-all-Parallel.PS1
 Set-Location C:\Shared
 
 # Exclude the work group machine due to PS cannot access to that machine.
-#$excludemachine = @('MJ05QS92', '170024024057')
+#$excludemachine = @('ABC', 'XYZ')
 
 # Query all Windows 10, Windows 11 machines on Active Directory
 $computers = (Get-ADComputer -properties OperatingSystem -filter {(operatingsystem -like "*Windows 10*" -or operatingsystem -like "*Windows 11*")}).name | where { ($_ -notlike 'ABC') -and ($_ -notlike 'YYY') -and ($_ -notlike 'XYZ')}
