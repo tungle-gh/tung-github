@@ -77,3 +77,38 @@ TotalHours        : 0.0106236407777778
 TotalMinutes      : 0.637418446666667
 TotalSeconds      : 38.2451068
 TotalMilliseconds : 38245.1068
+
+---
+With 
+    #($winrm_obj | format-table | out-string).TrimStart() 
+} -ThrottleLimit 10
+
+PS C:\Shared\Backup> Measure-Command {.\get-all-parallel.PS1}
+
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 24
+Milliseconds      : 773
+Ticks             : 247730611
+TotalDays         : 0.000286725244212963
+TotalHours        : 0.00688140586111111
+TotalMinutes      : 0.412884351666667
+TotalSeconds      : 24.7730611
+TotalMilliseconds : 24773.0611
+
+---
+-ThrottleLimit 20
+PS C:\Shared\Backup> Measure-Command {.\get-all-parallel.PS1}
+
+Days              : 0
+Hours             : 0
+Minutes           : 0
+Seconds           : 9
+Milliseconds      : 555
+Ticks             : 95550571
+TotalDays         : 0.000110590938657407
+TotalHours        : 0.00265418252777778
+TotalMinutes      : 0.159250951666667
+TotalSeconds      : 9.5550571
+TotalMilliseconds : 9555.0571
