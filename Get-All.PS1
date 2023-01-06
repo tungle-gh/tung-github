@@ -69,9 +69,9 @@ foreach ($computer in $computers) {
 $results | format-table
 
 ---
-PS C:\FTP> C:\Shared\PS Scripts\Query-all2.PS1
+PS C:\Shared> C:\Shared\PS Scripts\Query-all2.PS1
 
 Computername Windows OS Build Symantec_DefsDate LastReboot             UserName       Category
 ------------ ---------------- ----------------- ----------             --------       --------
-ABC     22H2.19045.2364  2022-01-05 r23    12/16/2021 4:16:21 PM  cisa\abc    restart 
-XYZ     22H2.19045.2364  2022-01-05 r23    12/15/2021 10:54:53 AM cisa\xyz restart 
+ABC         22H2.19045.2364     2022-01-05 r23   12/16/2021 4:16:21 PM  cisa\abc    restart 
+XYZ         22H2.19045.2364     2022-01-05 r23   12/15/2021 10:54:53 AM cisa\xyz    restart 
